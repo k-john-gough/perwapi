@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PERWAPI", "PERWAPI\PERWAPI.csproj", "{6E89897A-ECB1-460E-976E-A14179524F81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolRW", "..\CVS-symbolRW\SymbolRW.csproj", "{2BC469D1-46DA-4FBF-A431-6B1344BBCD23}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolRW", "SymbolRW\SymbolRW.csproj", "{2BC469D1-46DA-4FBF-A431-6B1344BBCD23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
