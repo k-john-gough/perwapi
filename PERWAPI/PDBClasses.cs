@@ -304,7 +304,7 @@ namespace QUT.PERWAPI
 
             // Get the blank PDB file from the resource assembly
             System.Reflection.Assembly currentAssembly = System.Reflection.Assembly.GetExecutingAssembly();
-            Stream blankPDB = currentAssembly.GetManifestResourceStream("PERWAPI.Blank.pdb");
+            Stream blankPDB = currentAssembly.GetManifestResourceStream("QUT.PERWAPI.Blank.pdb");
 
             // Write the blank PDB file to the disk
             using (FileStream fs = new FileStream(PDBFilename, FileMode.OpenOrCreate, FileAccess.Write))
