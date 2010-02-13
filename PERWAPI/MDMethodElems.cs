@@ -691,7 +691,7 @@ namespace QUT.PERWAPI
             if (sig == null) sig = buff.ReadMethSig(this, sigIx);
             sig.name = name;
             parList = new Param[sig.numPars];
-            if (parIx >= buff.GetTableSize(MDTable.Param))
+            if (parIx > buff.GetTableSize(MDTable.Param))
             {
                 // EXPERIMENTAL kjg 19 November 2007
                 //  It is actually allowed that a method def does not
