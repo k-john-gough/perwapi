@@ -1231,7 +1231,9 @@ namespace QUT.PERWAPI
                     //                          
                     if (numLoBounds > 0)
                     {
-                        loBounds = new int[numLoBounds];
+                      int constraint = (numLoBounds < numSizes ? numSizes : numLoBounds);
+                      loBounds = new int[constraint];
+                        //loBounds = new int[numLoBounds];
                         for (int i = 0; i < numLoBounds; i++)
                             loBounds[i] = blob.ReadCompressedInt();
                         if (numSizes > 0)
