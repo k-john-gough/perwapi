@@ -2104,7 +2104,9 @@ namespace QUT.PERWAPI {
       }
     }
 
-    public virtual string ToString() { return "line " + this.startLine.ToString(); }
+    public virtual string ToString() { 
+      return String.Format("line {0}:{1}-{2}:{3}", this.startLine, this.startCol, this.endLine, this.endCol); 
+    }
   }
 
   /**************************************************************************/
