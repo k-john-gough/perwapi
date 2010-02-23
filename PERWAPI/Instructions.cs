@@ -1541,8 +1541,8 @@ namespace QUT.PERWAPI {
     protected static readonly string[] FEopcode = {
             "arglist", "ceq", "cgt", "cgt.un", "clt", "clt.un", "ldftn", "ldvirtftn",
             "ERROR", "ldarg", "ldarga", "starg", "ldloc", "ldloca", "stloc", "localloc",
-            "ERROR", "endfilter", "unaligned", "volatile", "tail", "initobj", "ERROR", "cpblk",
-            "initblk", "ERROR", "rethrow", "ERROR", "sizeof", "refanytype", "readonly"};
+            "ERROR", "endfilter", "unaligned", "volatile", "tail", "initobj", "constrained", "cpblk",
+            "initblk", "no.", "rethrow", "ERROR", "sizeof", "refanytype", "readonly"};
 
     /// <summary>
     /// A list of the delta distances for the given FE CIL instructions.
@@ -1550,8 +1550,8 @@ namespace QUT.PERWAPI {
     protected static readonly int[] FEopDeltaDistance = {
             1 /* arglist */, -1 /* ceq */, -1 /* cgt */, -1 /* cgt.un */, -1 /* clt */, -1 /* clt.un */, 1 /* ldftn */, 0 /* ldvirtftn */,
             -99 /* ERROR */, 1 /* ldarg */, 1 /* ldarga */, -1 /* starg */, 1 /* ldloc */, 1 /* ldloca */, -1 /* stloc */, 0 /* localloc */,
-            -99 /* ERROR */, -1 /* endfilter */, 0 /* unaligned */, 0 /* volatile */, 0 /* tail */, -1 /* initobj */, -99 /* ERROR */, -3 /* cpblk */,
-            -3 /* initblk */, -99 /* ERROR */, 0 /* rethrow */, -99 /* ERROR */, 1 /* sizeof */, 0 /* refanytype */, 0 /* readonly */};
+            -99 /* ERROR */, -1 /* endfilter */, 0 /* unaligned */, 0 /* volatile */, 0 /* tail */, -1 /* initobj */, 0 /* constrained */, -3 /* cpblk */,
+            -3 /* initblk */, 0 /* no. */, 0 /* rethrow */, -99 /* ERROR */, 1 /* sizeof */, 0 /* refanytype */, 0 /* readonly */};
 
     internal bool twoByteInstr = false;
     internal uint size = 1;
@@ -1675,7 +1675,7 @@ namespace QUT.PERWAPI {
       }
     }
 
-    public virtual string ToString() { return this.GetInstrString(); }
+    public override string ToString() { return this.GetInstrString(); }
 
     /// <summary>
     /// Get the delta distance for this instruction.
@@ -1966,7 +1966,7 @@ namespace QUT.PERWAPI {
       output.WriteLine("Label" + num + ":");
     }
 
-    public virtual string ToString() { return "label"; }
+    public override string ToString() { return "label"; }
   }
 
   /**************************************************************************/
@@ -2104,7 +2104,7 @@ namespace QUT.PERWAPI {
       }
     }
 
-    public virtual string ToString() { 
+    public override string ToString() { 
       return String.Format("line {0}:{1}-{2}:{3}", this.startLine, this.startCol, this.endLine, this.endCol); 
     }
   }
@@ -2501,7 +2501,7 @@ namespace QUT.PERWAPI {
       }
     }
 
-    public virtual string ToString() { return "Open scope"; }
+    public override string ToString() { return "Open scope"; }
   }
   /************************************************************************/
 
@@ -2550,8 +2550,9 @@ namespace QUT.PERWAPI {
         output.pdbWriter.CloseScope((int)offset);
     }
 
-    public virtual string ToString() { return "Close scope"; }
+    public override string ToString() { return "Close scope"; }
   }
+
   /**************************************************************************/
 
   public class FieldInstr : Instr {
@@ -2645,21 +2646,22 @@ namespace QUT.PERWAPI {
     /// </remarks>
     /// <returns>An integer value representing the delta distance.</returns>
     internal override int GetDeltaDistance() {
+      MethSig mSig = null;
       switch ((MethodOp)instr) {
         case MethodOp.callvirt:
         case MethodOp.call: {
-
+            mSig = meth.GetSig();
             // Add the parameter count to the depth
-            int depth = (int)meth.GetSig().numPars * -1;
+            int depth = (int)mSig.numPars * -1;
 
             // Check to see if this is an instance method
-            if (meth.GetSig().HasCallConv(CallConv.Instance)) depth--;
+            if (mSig.HasCallConv(CallConv.Instance)) depth--;
 
             // Check to see if this method uses the optional parameters
-            if (meth.GetSig().HasCallConv(CallConv.Vararg)) depth += (int)meth.GetSig().numOptPars * -1;
+            if (mSig.HasCallConv(CallConv.Vararg)) depth += (int)mSig.numOptPars * -1;
 
             // Check to see if this method uses the generic parameters
-            if (meth.GetSig().HasCallConv(CallConv.Generic)) depth += (int)meth.GetSig().numGenPars * -1;
+            if (mSig.HasCallConv(CallConv.Generic)) depth += (int)mSig.numGenPars * -1;
 
             // Check if a return value will be placed on the stack.
             if (!meth.GetRetType().SameType(PrimitiveType.Void)) depth++;
@@ -2667,15 +2669,15 @@ namespace QUT.PERWAPI {
             return depth;
           }
         case MethodOp.newobj: {
-
+            mSig = meth.GetSig();
             // Add the parameter count to the depth
-            int depth = (int)meth.GetSig().numPars * -1;
+            int depth = (int)mSig.numPars * -1;
 
             // Check to see if this method uses the optional parameters
-            if (meth.GetSig().HasCallConv(CallConv.Vararg)) depth += (int)meth.GetSig().numOptPars * -1;
+            if (mSig.HasCallConv(CallConv.Vararg)) depth += (int)mSig.numOptPars * -1;
 
             // Check to see if this method uses the generic parameters
-            if (meth.GetSig().HasCallConv(CallConv.Generic)) depth += (int)meth.GetSig().numGenPars * -1;
+            if (mSig.HasCallConv(CallConv.Generic)) depth += (int)mSig.numGenPars * -1;
 
             // Add the object reference that is loaded onto the stack
             depth++;
@@ -2690,7 +2692,7 @@ namespace QUT.PERWAPI {
           return 0;
         default:
           // Someone has added a new MethodOp and not added a case for it here.
-          throw new Exception("The MethodOp for this MethoInstr is not supported.");
+          throw new Exception("The MethodOp for this MethInstr is not supported.");
       }
     }
 

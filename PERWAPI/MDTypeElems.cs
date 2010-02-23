@@ -31,6 +31,12 @@ namespace QUT.PERWAPI
     {
         protected byte typeIndex;
 
+      /// <summary>
+      /// The following is only used for TypeSpecs and ClassSpecs. kjg
+      /// </summary>
+        internal bool typeSpecAdded = false; // so that MetaDataOut can reset it
+
+
         /*-------------------- Constructors ---------------------------------*/
 
         internal Type(byte tyIx) { typeIndex = tyIx; }
@@ -153,7 +159,7 @@ namespace QUT.PERWAPI
     {
 
         uint sigIx = 0;
-        internal bool typeSpecAdded = false; // so that MetaDataOut can reset it
+        //internal bool typeSpecAdded = false; // so that MetaDataOut can reset it
 
         /*-------------------- Constructors ---------------------------------*/
 
@@ -311,7 +317,7 @@ namespace QUT.PERWAPI
 
     /**************************************************************************/
     /// <summary>
-    /// Descriptor for  
+    /// Descriptor for a generic parameter for either a class or method. 
     /// </summary>
     public class GenericParam : Type
     {
@@ -323,6 +329,10 @@ namespace QUT.PERWAPI
         MetaDataElement parent;
         private ArrayList constraints = new ArrayList();
         internal static bool extraField = true;
+
+        // There should only be one GenericParTypeSpec entry 
+        // int the metadata for each GenericParam.
+        GenericParTypeSpec myTypeSpec;
 
         /*-------------------- Constructors ---------------------------------*/
 
@@ -517,11 +527,14 @@ namespace QUT.PERWAPI
 
         internal override Type AddTypeSpec(MetaDataOut md)
         {
-            // check that this generic parameter belongs to the "current" method ??
-            GenericParTypeSpec tSpec = new GenericParTypeSpec(this);
-            md.AddToTable(MDTable.TypeSpec, tSpec);
-            return tSpec;
+          if (this.myTypeSpec == null) {
+            this.myTypeSpec = new GenericParTypeSpec(this);
+            md.AddToTable(MDTable.TypeSpec, this.myTypeSpec);
+          }
+          return this.myTypeSpec;
         }
+
+        
 
         internal override uint SortKey()
         {
@@ -599,7 +612,7 @@ namespace QUT.PERWAPI
 
     /**************************************************************************/
     /// <summary>
-    /// 
+    /// Wrapper for Generic Parameter of TypeSpec type.
     /// </summary> 
     public class GenericParTypeSpec : TypeSpec
     {
@@ -646,7 +659,9 @@ namespace QUT.PERWAPI
 
     /**************************************************************************/
     /// <summary>
-    /// The IL Array type
+    /// The IL Array type: there are two sub-classes --
+    /// BoundArrays, possibly multi dimensional arrays with bounds.
+    /// ZeroBasedArrays, built-in 1-D arrays of the CLR
     /// </summary>
     public abstract class Array : TypeSpec
     {
@@ -682,7 +697,7 @@ namespace QUT.PERWAPI
 
     /**************************************************************************/
     /// <summary>
-    /// Multi dimensional array with explicit bounds
+    /// Arrays with one or more dimensions, with explicit bounds
     /// </summary>
     public class BoundArray : Array
     {

@@ -805,10 +805,6 @@ namespace QUT.PERWAPI
                         {
                             ((MetaDataElement)tables[ix][j]).Resolve(this);
                         }
-                        else
-                        {
-                            Console.WriteLine();
-                        }
                     }
                 }
             }
@@ -1092,8 +1088,6 @@ namespace QUT.PERWAPI
 
         private MethSig ReadMethSig(Method currMeth, bool firstByteRead)
         {
-            //Class currClass = null;
-            //if (currMeth != null) currClass = (Class)currMeth.GetParent();
             MethSig meth = new MethSig(null);
             if (!firstByteRead)
             {
@@ -1108,9 +1102,7 @@ namespace QUT.PERWAPI
                 if (currMeth is MethodRef)
                 {
                     ((MethodRef)currMeth).MakeGenericPars(meth.numGenPars);
-                } //else if (currMeth is MethodDef) {
-                //GetGenericParams((MethodDef)currMeth);
-                //}
+                }
             }
             uint parCount = blob.ReadCompressedNum();
             if (Diag.DiagOn) Console.WriteLine("Method sig has " + parCount + " parameters");
@@ -1180,12 +1172,12 @@ namespace QUT.PERWAPI
         }
 
         private Type[] GetListOfType()
-        { //Class currClass, Method currMeth) {
+        { //Class currClass | Method currMeth) {
             uint numPars = blob.ReadCompressedNum();
             Type[] gPars = new Type[numPars];
             for (int i = 0; i < numPars; i++)
             {
-                gPars[i] = GetBlobType(); //currClass,currMeth);
+                gPars[i] = GetBlobType(); //currClass|currMeth);
             }
             return gPars;
         }
@@ -1351,29 +1343,33 @@ namespace QUT.PERWAPI
             prop.SetPropertyParams(pars);
         }
 
-        internal DataConstant GetDataConstant(uint rva, Type constType)
-        {
-            BaseStream.Seek(GetOffset(rva), SeekOrigin.Begin);
-            if (constType is PrimitiveType)
-            {
-                switch (constType.GetTypeIndex())
-                {
-                    case ((int)ElementType.I1): return new IntConst(ReadByte());
-                    case ((int)ElementType.I2): return new IntConst(ReadInt16());
-                    case ((int)ElementType.I4): return new IntConst(ReadInt32());
-                    case ((int)ElementType.I8): return new IntConst(ReadInt64());
-                    case ((int)ElementType.R4): return new FloatConst(ReadSingle());
-                    case ((int)ElementType.R8): return new DoubleConst(ReadDouble());
-                    case ((int)ElementType.String): return new StringConst(ReadString());
-                }
+        internal DataConstant GetDataConstant(uint rva, Type constType) {
+          ManagedPointer pointer = null;
+          ClassDef image = null;
+          BaseStream.Seek(GetOffset(rva), SeekOrigin.Begin);
+          if (constType is PrimitiveType) {
+            switch (constType.GetTypeIndex()) {
+              case ((int)ElementType.I1): return new IntConst(ReadByte());
+              case ((int)ElementType.I2): return new IntConst(ReadInt16());
+              case ((int)ElementType.I4): return new IntConst(ReadInt32());
+              case ((int)ElementType.I8): return new IntConst(ReadInt64());
+              case ((int)ElementType.R4): return new FloatConst(ReadSingle());
+              case ((int)ElementType.R8): return new DoubleConst(ReadDouble());
+              case ((int)ElementType.String): return new StringConst(ReadString());
             }
-            else if (constType is ManagedPointer)
-            {
-                uint dataRVA = ReadUInt32();
-                Type baseType = ((ManagedPointer)constType).GetBaseType();
-                return new AddressConstant(GetDataConstant(dataRVA, baseType));
-            } // need to do repeated constant??
-            return null;
+          }
+          else if ((pointer = constType as ManagedPointer) != null) {
+            uint dataRVA = ReadUInt32();
+            Type baseType = pointer.GetBaseType();
+            return new AddressConstant(GetDataConstant(dataRVA, baseType));
+          } // need to do repeated constant??
+          else if ((image = constType as ClassDef) != null && image.Layout != null) {
+            byte[] data = new byte[image.Layout.GetSize()];
+            for (int i = 0; i < data.Length; i++)
+              data[i] = ReadByte();
+            return new ByteArrConst(data);
+          }
+          return null;
         }
 
         internal ModuleFile GetFileDesc(string name)

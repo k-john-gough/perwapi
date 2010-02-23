@@ -33,13 +33,48 @@ namespace QUT.PERWAPI
     {
         internal static readonly uint relocPageSize = 4096;  // 4K pages for fixups
 
+      /// <summary>
+      /// Eight characters exactly, null padded if necessary.
+      /// </summary>
         char[] name;
         string nameString;
-        uint offset = 0, tide = 0, size = 0, rva = 0, relocTide = 0, numRelocs = 0;
-        uint relocOff = 0, relocRVA = 0, lineRVA = 0, numLineNums = 0;
-        uint flags = 0, padding = 0;
+
+      /// <summary>
+      /// Total size of the section in bytes. If this value is 
+      /// greater than SizeOFRawData the section is zero-padded.
+      /// </summary>
+        uint loadedSize = 0;
+
+      /// <summary>
+      /// Position in memory when loaded, relative to image base.
+      /// </summary>
+        uint loadedRVA = 0;
+
+      /// <summary>
+      /// Size of raw data in the section. Must be multiple of file alignment size.
+      /// Can be smaller than loadedSize, or larger (as a result of alignment).
+      /// </summary>
+        uint sizeOnDisk = 0;
+
+      /// <summary>
+      /// Offset to section's page within the PE file.  Must be multiple
+      /// of file alignment constant.
+      /// </summary>
+        uint fileOffset = 0;
+
+      // These are all zero mostly.
+        uint relocRVA, lineRVA, relocOff, numRelocs, numLineNums = 0;
+
+      /// <summary>
+      /// Flags of section: code = 0x20, init-data = 0x40, un-init-data = 0x80, 
+      /// execute = 0x20000000, read = 0x40000000, write = 0x80000000.
+      /// </summary>
+        uint flags;
+
+        uint relocTide = 0;
+        uint padding = 0;
         uint[] relocs;
-        //bool relocsDone = false;
+
 
         internal Section(string sName, uint sFlags)
         {
@@ -54,10 +89,10 @@ namespace QUT.PERWAPI
             for (int i = 0; i < name.Length; i++)
                 name[i] = (char)input.ReadByte();
             nameString = new String(name);
-            tide = input.ReadUInt32();
-            rva = input.ReadUInt32();
-            size = input.ReadUInt32();
-            offset = input.ReadUInt32();
+            loadedSize = input.ReadUInt32();
+            loadedRVA = input.ReadUInt32();
+            sizeOnDisk = input.ReadUInt32();
+            fileOffset = input.ReadUInt32();
             relocRVA = input.ReadUInt32();
             lineRVA = input.ReadUInt32();
             numRelocs = input.ReadUInt16();
@@ -65,49 +100,51 @@ namespace QUT.PERWAPI
             flags = input.ReadUInt32();
             if (Diag.DiagOn)
             {
-                Console.WriteLine("  " + nameString + " RVA = " + Hex.Int(rva) + "  vSize = " + Hex.Int(tide));
-                Console.WriteLine("        FileOffset = " + Hex.Int(offset) + "  aSize = " + Hex.Int(size));
+                Console.WriteLine("  " + nameString + " RVA = " + Hex.Int(loadedRVA) + "  vSize = " + Hex.Int(loadedSize));
+                Console.WriteLine("        FileOffset = " + Hex.Int(fileOffset) + "  aSize = " + Hex.Int(sizeOnDisk));
             }
         }
 
         internal bool ContainsRVA(uint rvaPos)
         {
-            return (rva <= rvaPos) && (rvaPos <= rva + tide);
+            return (loadedRVA <= rvaPos) && (rvaPos <= loadedRVA + loadedSize);
         }
+
         internal uint GetOffset(uint inRVA)
         {
             uint offs = 0;
-            if ((rva <= inRVA) && (inRVA <= rva + tide))
-                offs = offset + (inRVA - rva);
+            if ((loadedRVA <= inRVA) && (inRVA <= loadedRVA + loadedSize))
+                offs = fileOffset + (inRVA - loadedRVA);
             return offs;
         }
-        internal uint Tide() { return tide; }
 
-        internal void IncTide(uint incVal) { tide += incVal; }
+        internal uint Tide() { return loadedSize; }
+
+        internal void IncTide(uint incVal) { loadedSize += incVal; }
 
         internal uint Padding() { return padding; }
 
-        internal uint Size() { return size; }
+        internal uint Size() { return sizeOnDisk; }
 
         internal void SetSize(uint pad)
         {
             padding = pad;
-            size = tide + padding;
+            sizeOnDisk = loadedSize + padding;
         }
 
-        internal uint RVA() { return rva; }
+        internal uint RVA() { return loadedRVA; }
 
-        internal void SetRVA(uint rva) { this.rva = rva; }
+        internal void SetRVA(uint loadedRVA) { this.loadedRVA = loadedRVA; }
 
-        internal uint Offset() { return offset; }
+        internal uint Offset() { return fileOffset; }
 
-        internal void SetOffset(uint offs) { offset = offs; }
+        internal void SetOffset(uint offs) { fileOffset = offs; }
 
         internal void DoBlock(BinaryWriter reloc, uint page, int start, int end)
         {
             //Console.WriteLine("rva = " + rva + "  page = " + page);
             if (Diag.DiagOn) Console.WriteLine("writing reloc block at " + reloc.BaseStream.Position);
-            reloc.Write(rva + page);
+            reloc.Write(loadedRVA + page);
             uint blockSize = (uint)(((end - start + 1) * 2) + 8);
             reloc.Write(blockSize);
             if (Diag.DiagOn) Console.WriteLine("Block size = " + blockSize);
@@ -183,10 +220,10 @@ namespace QUT.PERWAPI
         {
             if (Diag.DiagOn) Console.WriteLine("relocTide = " + relocTide);
             output.Write(name);
-            output.Write(tide);                 // Virtual size
-            output.Write(rva);                  // Virtual address
-            output.Write(size);                 // SizeOfRawData
-            output.Write(offset);               // PointerToRawData
+            output.Write(loadedSize);                 // Virtual size
+            output.Write(loadedRVA);                  // Virtual address
+            output.Write(sizeOnDisk);                 // SizeOfRawData
+            output.Write(fileOffset);               // PointerToRawData
             if (relocTide > 0)
             {
                 output.Write(relocRVA + relocOff);
