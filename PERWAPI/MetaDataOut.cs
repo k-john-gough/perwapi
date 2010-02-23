@@ -189,18 +189,26 @@ namespace QUT.PERWAPI
             return tables[tabIx];
         }
 
-        internal void AddToTable(MDTable tableIx, MetaDataElement elem)
-        {
-            // updates Row field of the element
-            // Console.WriteLine("Adding element to table " + (uint)tableIx);
-            ArrayList table = GetTable(tableIx);
-            if (table.Contains(elem))
-            {
-                Console.Out.WriteLine("ERROR - element already in table " + tableIx);
-                return;
-            }
+        internal void AddToTable(MDTable tableIx, MetaDataElement elem) {
+          // updates Row field of the element
+          // Console.WriteLine("Adding element to table " + (uint)tableIx);
+          ArrayList table = GetTable(tableIx);
+          if (table.Contains(elem)) {
+            Console.Out.WriteLine("ERROR - element already in table " + tableIx);
+            return;
+          }
+          elem.Row = (uint)table.Count + 1;
+          table.Add(elem);
+        }
+
+        internal void ConditionalAddToTable(MDTable tableIx, MetaDataElement elem) {
+          // updates Row field of the element
+          // Console.WriteLine("Adding element to table " + (uint)tableIx);
+          ArrayList table = GetTable(tableIx);
+          if (!table.Contains(elem)) {
             elem.Row = (uint)table.Count + 1;
             table.Add(elem);
+          }
         }
 
         internal uint TableIndex(MDTable tableIx)
@@ -337,7 +345,7 @@ namespace QUT.PERWAPI
                 ArrayList typeSpecTable = tables[(int)MDTable.TypeSpec];
                 for (int i = 0; i < typeSpecTable.Count; i++)
                 {
-                    ((TypeSpec)typeSpecTable[i]).typeSpecAdded = false;
+                  ((Type)typeSpecTable[i]).typeSpecAdded = false;
                 }
             }
             //Console.WriteLine("Writing padding at " + output.Seek(0,SeekOrigin.Current));

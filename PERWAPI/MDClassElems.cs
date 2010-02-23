@@ -392,9 +392,6 @@ namespace QUT.PERWAPI
             for (int i = 0; i < classFields.Count; i++)
             {
                 Type fType = ((Field)classFields[i]).GetFieldType();
-                //if ((fType is GenericParam) && (((GenericParam)fType).GetParent() == genClass)) {
-                //  fType = gPars[((GenericParam)fType).Index];
-                //}
                 fields.Add(new FieldRef(this, ((Field)classFields[i]).Name(), fType));
             }
         }
@@ -477,11 +474,10 @@ namespace QUT.PERWAPI
             //return (Type)genericParams[(int)ix];
         }
 
-        internal override sealed Type AddTypeSpec(MetaDataOut md)
-        {
-            md.AddToTable(MDTable.TypeSpec, this);
-            BuildMDTables(md);
-            return this;
+        internal override sealed Type AddTypeSpec(MetaDataOut md) {
+          md.AddToTable(MDTable.TypeSpec, this);
+          BuildMDTables(md);
+          return this;
         }
 
         internal override void BuildTables(MetaDataOut md)

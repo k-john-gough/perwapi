@@ -185,6 +185,13 @@ namespace QUT.PERWAPI
 
         internal MethSig GetSig() { return sig; }
 
+        internal MethSig GetSig(PEReader buff) {
+          if (sig == null)
+            sig = buff.ReadMethSig(this, this.sigIx);
+          return sig;
+        }
+
+
         internal void SetSig(MethSig sig)
         {
             this.sig = sig;
@@ -287,15 +294,20 @@ namespace QUT.PERWAPI
                 specs[i] = new MethodSpec(buff);
         }
 
-        internal override void Resolve(PEReader buff)
-        {
-            methParent = (Method)buff.GetCodedElement(CIx.MethodDefOrRef, parentIx);
-            buff.currentMethodScope = methParent;  // set scopes - Fix by CK
-            buff.currentClassScope = (Class)methParent.GetParent();
-            instTypes = buff.ReadMethSpecSig(instIx);
-            this.unresolved = false;
-            buff.currentMethodScope = null;
-            buff.currentClassScope = null;
+        internal override void Resolve(PEReader buff) {
+          methParent = (Method)buff.GetCodedElement(CIx.MethodDefOrRef, parentIx);
+          buff.currentMethodScope = methParent;  // set scopes - Fix by CK
+          buff.currentClassScope = (Class)methParent.GetParent();
+          //
+          // EXPERIMENTAL: The signature of the methParent must be
+          // visible as the signature of this MethodSpec.  The type-actuals
+          // are held in the instTypes array.
+          this.sig = this.methParent.GetSig(buff);
+          instTypes = buff.ReadMethSpecSig(instIx);
+          this.unresolved = false;
+          //
+          buff.currentMethodScope = null;
+          buff.currentClassScope = null;
         }
 
         internal override void TypeSig(MemoryStream str)
@@ -520,7 +532,7 @@ namespace QUT.PERWAPI
             nameIx = md.AddToStringsHeap(name);
             if (parent != null)
             {
-                if (parent is ClassSpec) md.AddToTable(MDTable.TypeSpec, parent);
+                if (parent is ClassSpec) md.ConditionalAddToTable(MDTable.TypeSpec, parent);
                 if (parent is ConstructedTypeSpec) 
                     md.AddToTable(MDTable.TypeSpec, ((ConstructedTypeSpec)parent).Spec);
                 parent.BuildMDTables(md);

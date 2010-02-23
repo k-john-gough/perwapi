@@ -173,21 +173,22 @@ namespace QUT.PERWAPI
 
         internal void Resolve(PEReader buff, uint fIx)
         {
-            /*
-            if ((flags & HasFieldMarshal) != 0) 
-              marshalType = FieldMarshal.FindMarshalType(buff,this,
-                buff.MakeCodedIndex(CIx.HasFieldMarshal,MDTable.Field,fIx));
-            if ((flags & HasFieldRVA) != 0)
-              initVal = FieldRVA.FindValue(buff,this,fIx);
-            if ((flags & HasDefault) != 0)
-              constVal = ConstantElem.FindConst(buff,this,
-                buff.MakeCodedIndex(CIx.HasConstant,MDTable.Field,fIx));
-            long offs = FieldLayout.FindLayout(buff,this,fIx);
-            if (offs > -1){
-              hasOffset = true;
-              offset = (uint)offs;
-            }
-            */
+ 
+            //if ((flags & HasFieldMarshal) != 0) 
+            //  marshalType = FieldMarshal.FindMarshalType(buff,this,
+            //    buff.MakeCodedIndex(CIx.HasFieldMarshal,MDTable.Field,fIx));
+            //if ((flags & HasFieldRVA) != 0) {
+            //initVal = FieldRVA.FindValue(buff, this, fIx);
+            //}
+            //if ((flags & HasDefault) != 0)
+            //  constVal = ConstantElem.FindConst(buff,this,
+            //    buff.MakeCodedIndex(CIx.HasConstant,MDTable.Field,fIx));
+            //long offs = FieldLayout.FindLayout(buff,this,fIx);
+            //if (offs > -1){
+            //  hasOffset = true;
+            //  offset = (uint)offs;
+            //}
+
             buff.currentClassScope = parent;
             type = buff.GetFieldType(sigIx);
             buff.currentClassScope = null;
@@ -508,8 +509,8 @@ namespace QUT.PERWAPI
                 type.BuildMDTables(md);
             if (parent != null)
             {
-                if (parent is ClassSpec) md.AddToTable(MDTable.TypeSpec, parent);
-                parent.BuildMDTables(md);
+              if (parent is ClassSpec) md.AddToTable(MDTable.TypeSpec, parent);
+              parent.BuildMDTables(md);
             }
         }
 
