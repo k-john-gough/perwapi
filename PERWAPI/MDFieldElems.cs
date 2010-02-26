@@ -504,12 +504,12 @@ namespace QUT.PERWAPI
         {
             md.AddToTable(tabIx, this);
             nameIx = md.AddToStringsHeap(name);
-            if (type is ClassSpec) md.AddToTable(MDTable.TypeSpec, type);
+            if (type is ClassSpec) md.ConditionalAddTypeSpec(type);
             if (!type.isDef())
                 type.BuildMDTables(md);
             if (parent != null)
             {
-              if (parent is ClassSpec) md.AddToTable(MDTable.TypeSpec, parent);
+              if (parent is ClassSpec) md.ConditionalAddTypeSpec(parent);
               parent.BuildMDTables(md);
             }
         }

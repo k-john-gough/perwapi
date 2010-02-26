@@ -201,10 +201,8 @@ namespace QUT.PERWAPI
           table.Add(elem);
         }
 
-        internal void ConditionalAddToTable(MDTable tableIx, MetaDataElement elem) {
-          // updates Row field of the element
-          // Console.WriteLine("Adding element to table " + (uint)tableIx);
-          ArrayList table = GetTable(tableIx);
+        internal void ConditionalAddTypeSpec(MetaDataElement elem) {
+          ArrayList table = GetTable(MDTable.TypeSpec);
           if (!table.Contains(elem)) {
             elem.Row = (uint)table.Count + 1;
             table.Add(elem);

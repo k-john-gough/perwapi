@@ -573,7 +573,7 @@ namespace QUT.PERWAPI
         {
             md.AddToTable(MDTable.InterfaceImpl, this);
             if (!theInterface.isDef()) theInterface.BuildMDTables(md);
-            if (theInterface is ClassSpec) md.AddToTable(MDTable.TypeSpec, theInterface);
+            if (theInterface is ClassSpec) md.ConditionalAddTypeSpec(theInterface);
         }
 
         internal static uint Size(MetaData md)

@@ -84,11 +84,12 @@ namespace QUT.PERWAPI
             ReadCLIHeader();
             ReadMetaData();
             if (refsOnly)
-                ReadMetaDataTableRefs();
+                this.ReadMetaDataTableRefs();
             else
             {
-                ReadMetaDataTables();
+                this.ReadMetaDataTables();
                 pefile.metaDataTables = new MetaDataTables(tables);
+                this.SaveUnmanagedResources();
             }
             file.Close();
 
@@ -128,6 +129,8 @@ namespace QUT.PERWAPI
             PEReader reader = new PEReader(pefile, file, false, skipBody);
             return pefile;
         }
+
+
 
         internal static ReferenceScope GetExportedInterface(string filename)
         {
@@ -292,6 +295,7 @@ namespace QUT.PERWAPI
             /* Data Directories */
             DataDirectoryRVA = new uint[FileImage.NumDataDirectories];
             DataDirectorySize = new uint[FileImage.NumDataDirectories];
+            // (Index 2 is resource table address and size)
             for (int i = 0; i < FileImage.NumDataDirectories; i++)
             {
                 DataDirectoryRVA[i] = ReadUInt32();
@@ -833,6 +837,28 @@ namespace QUT.PERWAPI
                 else
                     ((ModuleFile)ep).SetEntryPoint();
             }
+        }
+
+      /// <summary>
+      /// This method saves any *unmanaged* resources in the input PE-file 
+      /// to the PEResourcesDirectory field PEFile.unmanagedResourceRoot.
+      /// These should be written out to the .rscr section in the PE-file.
+      /// Managed resources appear as ManifestResouces in metadata, and are
+      /// handled completely differently.
+      /// </summary>
+        private void SaveUnmanagedResources() {
+          if (this.DataDirectorySize[2] != 0) {
+            uint resourceRVA = this.DataDirectoryRVA[2];
+            uint fileOffset = this.GetOffset(resourceRVA);
+            long savedPos = this.BaseStream.Position;
+            this.BaseStream.Seek(fileOffset, SeekOrigin.Begin);
+            PEFile client = thisScope as PEFile;
+            if (client != null) {
+              client.unmanagedResourceRoot = new PEResourceDirectory();
+              client.unmanagedResourceRoot.PopulateResourceDirectory(this, fileOffset);
+            }
+            this.BaseStream.Seek(savedPos, SeekOrigin.Begin);
+          }
         }
 
         internal uint GetIndex(MDTable tabIx)

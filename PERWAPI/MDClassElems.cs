@@ -475,14 +475,13 @@ namespace QUT.PERWAPI
         }
 
         internal override sealed Type AddTypeSpec(MetaDataOut md) {
-          md.AddToTable(MDTable.TypeSpec, this);
+          md.ConditionalAddTypeSpec(this);
           BuildMDTables(md);
           return this;
         }
 
         internal override void BuildTables(MetaDataOut md)
         {
-            //md.AddToTable(MDTable.TypeSpec,this);
             if (!genClass.isDef())
                 genClass.BuildMDTables(md);
             for (int i = 0; i < genericParams.Count; i++)

@@ -532,9 +532,9 @@ namespace QUT.PERWAPI
             nameIx = md.AddToStringsHeap(name);
             if (parent != null)
             {
-                if (parent is ClassSpec) md.ConditionalAddToTable(MDTable.TypeSpec, parent);
+                if (parent is ClassSpec) md.ConditionalAddTypeSpec(parent);
                 if (parent is ConstructedTypeSpec) 
-                    md.AddToTable(MDTable.TypeSpec, ((ConstructedTypeSpec)parent).Spec);
+                    md.ConditionalAddTypeSpec(((ConstructedTypeSpec)parent).Spec);
                 parent.BuildMDTables(md);
             }
             sig.BuildTables(md);
