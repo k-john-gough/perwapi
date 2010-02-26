@@ -260,15 +260,6 @@ namespace QUT.PERWAPI
             }
         }
 
-        /*    /// <summary>
-            /// Make this class inherit from ValueType
-            /// </summary>
-            public override void MakeValueClass() {
-              superType = MSCorLib.mscorlib.ValueType();
-              typeIndex = (byte)ElementType.ValueType;
-            }
-            */
-
         /// <summary>
         /// Add an attribute to the attributes of this class
         /// </summary>
@@ -976,85 +967,84 @@ namespace QUT.PERWAPI
             }
         }
 
-        internal sealed override void BuildTables(MetaDataOut md)
-        {
-            md.AddToTable(MDTable.TypeDef, this);
-            //if ((flags & (uint)TypeAttr.Interface) != 0) { superType = null; }
-            if (superType != null)
-            {
-                superType.BuildMDTables(md);
-                if (superType is ClassSpec) md.AddToTable(MDTable.TypeSpec, superType);
+        internal sealed override void BuildTables(MetaDataOut md) {
+          // The processing of superTypes must be done either entirely
+          // before or entirely after the processing of this TypeDef.
+          // Otherwise the method indices will not be monotonic in table-2.
+
+          if (superType != null) {
+            superType.BuildMDTables(md);
+            if (superType is ClassSpec) md.ConditionalAddTypeSpec(superType);
+          }
+
+          //uint startT = md.TableIndex(MDTable.TypeDef);
+          md.AddToTable(MDTable.TypeDef, this);
+
+          for (int i = 0; i < genericParams.Count; i++) {
+            ((GenericParam)genericParams[i]).BuildMDTables(md);
+          }
+          nameIx = md.AddToStringsHeap(name);
+          nameSpaceIx = md.AddToStringsHeap(nameSpace);
+          if (security != null) {
+            for (int i = 0; i < security.Count; i++) {
+              ((DeclSecurity)security[i]).BuildMDTables(md);
             }
-            for (int i = 0; i < genericParams.Count; i++)
-            {
-                ((GenericParam)genericParams[i]).BuildMDTables(md);
+          }
+
+          if (layout != null) layout.BuildMDTables(md);
+
+          //uint startM = md.TableIndex(MDTable.Method);
+
+          // Console.WriteLine("adding methods " + methods.Count);
+          methodIx = md.TableIndex(MDTable.Method);
+          for (int i = 0; i < methods.Count; i++) {
+            ((MethodDef)methods[i]).BuildMDTables(md);
+          }
+
+          //Console.WriteLine("Building tables for " + this.TypeName());
+          //Console.WriteLine("tIx {0}, methods {1} - {2}",
+          //  Hex.Short((short)startT),
+          //  Hex.Short((short)startM),
+          //  Hex.Short((short)md.TableIndex(MDTable.Method)));
+
+          // Console.WriteLine("adding fields");
+          fieldIx = md.TableIndex(MDTable.Field);
+          for (int i = 0; i < fields.Count; i++) {
+            ((FieldDef)fields[i]).BuildMDTables(md);
+          }
+          // Console.WriteLine("adding interfaceimpls and methodimpls");
+          if (interfaces.Count > 0) {
+            for (int i = 0; i < interfaces.Count; i++) {
+              ((InterfaceImpl)interfaces[i]).BuildMDTables(md);
             }
-            nameIx = md.AddToStringsHeap(name);
-            nameSpaceIx = md.AddToStringsHeap(nameSpace);
-            if (security != null)
-            {
-                for (int i = 0; i < security.Count; i++)
-                {
-                    ((DeclSecurity)security[i]).BuildMDTables(md);
-                }
+          }
+          if (methodImpls.Count > 0) {
+            for (int i = 0; i < methodImpls.Count; i++) {
+              ((MethodImpl)methodImpls[i]).BuildMDTables(md);
             }
-            // Console.WriteLine("Building tables for " + name);
-            if (layout != null) layout.BuildMDTables(md);
-            // Console.WriteLine("adding methods " + methods.Count);
-            methodIx = md.TableIndex(MDTable.Method);
-            for (int i = 0; i < methods.Count; i++)
-            {
-                ((MethodDef)methods[i]).BuildMDTables(md);
+          }
+          // Console.WriteLine("adding events and properties");
+          if (events.Count > 0) {
+            new MapElem(this, md.TableIndex(MDTable.Event), MDTable.EventMap).BuildMDTables(md);
+            for (int i = 0; i < events.Count; i++) {
+              ((Event)events[i]).BuildMDTables(md);
             }
-            // Console.WriteLine("adding fields");
-            fieldIx = md.TableIndex(MDTable.Field);
-            for (int i = 0; i < fields.Count; i++)
-            {
-                ((FieldDef)fields[i]).BuildMDTables(md);
+          }
+          if (properties.Count > 0) {
+            new MapElem(this, md.TableIndex(MDTable.Property), MDTable.PropertyMap).BuildMDTables(md);
+            for (int i = 0; i < properties.Count; i++) {
+              ((Property)properties[i]).BuildMDTables(md);
             }
-            // Console.WriteLine("adding interfaceimpls and methodimpls");
-            if (interfaces.Count > 0)
-            {
-                for (int i = 0; i < interfaces.Count; i++)
-                {
-                    ((InterfaceImpl)interfaces[i]).BuildMDTables(md);
-                }
+          }
+          // Console.WriteLine("Adding nested classes");
+          if (nestedClasses.Count > 0) {
+            for (int i = 0; i < nestedClasses.Count; i++) {
+              ClassDef nClass = (ClassDef)nestedClasses[i];
+              nClass.BuildMDTables(md);
+              new MapElem(nClass, this, MDTable.NestedClass).BuildTables(md);
             }
-            if (methodImpls.Count > 0)
-            {
-                for (int i = 0; i < methodImpls.Count; i++)
-                {
-                    ((MethodImpl)methodImpls[i]).BuildMDTables(md);
-                }
-            }
-            // Console.WriteLine("adding events and properties");
-            if (events.Count > 0)
-            {
-                new MapElem(this, md.TableIndex(MDTable.Event), MDTable.EventMap).BuildMDTables(md);
-                for (int i = 0; i < events.Count; i++)
-                {
-                    ((Event)events[i]).BuildMDTables(md);
-                }
-            }
-            if (properties.Count > 0)
-            {
-                new MapElem(this, md.TableIndex(MDTable.Property), MDTable.PropertyMap).BuildMDTables(md);
-                for (int i = 0; i < properties.Count; i++)
-                {
-                    ((Property)properties[i]).BuildMDTables(md);
-                }
-            }
-            // Console.WriteLine("Adding nested classes");
-            if (nestedClasses.Count > 0)
-            {
-                for (int i = 0; i < nestedClasses.Count; i++)
-                {
-                    ClassDef nClass = (ClassDef)nestedClasses[i];
-                    nClass.BuildMDTables(md);
-                    new MapElem(nClass, this, MDTable.NestedClass).BuildTables(md);
-                }
-            }
-            // Console.WriteLine("End of building tables");
+          }
+          // Console.WriteLine("End of building tables");
         }
 
         internal override void BuildCILInfo(CILWriter output)

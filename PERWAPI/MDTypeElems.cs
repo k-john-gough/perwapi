@@ -184,7 +184,7 @@ namespace QUT.PERWAPI
         internal override sealed Type AddTypeSpec(MetaDataOut md)
         {
             if (typeSpecAdded) return this;
-            md.AddToTable(MDTable.TypeSpec, this);
+            md.ConditionalAddTypeSpec(this);
             BuildMDTables(md);
             typeSpecAdded = true;
             return this;
@@ -553,7 +553,7 @@ namespace QUT.PERWAPI
                 constraints[i] = new GenericParamConstraint(this, cClass);
                 if (cClass is ClassRef) cClass.BuildMDTables(md);
                 // Fix by CK - should be BuildTables too??
-                if (cClass is ClassSpec) md.AddToTable(MDTable.TypeSpec, cClass);
+                if (cClass is ClassSpec) md.ConditionalAddTypeSpec(cClass);
             }
         }
 

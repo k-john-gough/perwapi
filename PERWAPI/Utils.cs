@@ -115,7 +115,7 @@ namespace QUT.PERWAPI
         readonly static uint nibble1Mask = 0x000000F0;
 
         /// <summary>
-        /// Derives a hexademical string for a byte value
+        /// Derives a hexadecimal string for a byte value
         /// </summary>
         /// <param name="b">the byte value</param>
         /// <returns>hex string for the byte value</returns>
@@ -131,7 +131,7 @@ namespace QUT.PERWAPI
         }
 
         /// <summary>
-        /// Derives a hexademical string for a short value
+        /// Derives a hexadecimal string for a short value
         /// </summary>
         /// <param name="b">the short value</param>
         /// <returns>hex string for the short value</returns>
@@ -152,7 +152,7 @@ namespace QUT.PERWAPI
         }
 
         /// <summary>
-        /// Derives a hexademical string for an int value
+        /// Derives a hexadecimal string for an int value
         /// </summary>
         /// <param name="val">the int value</param>
         /// <returns>hex string for the int value</returns>
@@ -174,7 +174,7 @@ namespace QUT.PERWAPI
         }
 
         /// <summary>
-        /// Derives a hexademical string for an unsigned int value
+        /// Derives a hexadecimal string for an unsigned int value
         /// </summary>
         /// <param name="num">the unsigned int value</param>
         /// <returns>hex string for the unsigned int value</returns>
@@ -195,7 +195,7 @@ namespace QUT.PERWAPI
         }
 
         /// <summary>
-        /// Derives a hexademical string for a long value
+        /// Derives a hexadecimal string for a long value
         /// </summary>
         /// <param name="lnum">the long value</param>
         /// <returns>hex string for the long value</returns>
@@ -206,7 +206,7 @@ namespace QUT.PERWAPI
         }
 
         /// <summary>
-        /// Derives a hexademical string for an unsigned long value
+        /// Derives a hexadecimal string for an unsigned long value
         /// </summary>
         /// <param name="num">the unsigned long value</param>
         /// <returns>hex string for the unsigned long value</returns>

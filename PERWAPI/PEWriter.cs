@@ -30,7 +30,8 @@ namespace QUT.PERWAPI
     internal class PEWriter : BinaryWriter
     {
         private Section text, sdata, rsrc = null;
-        ArrayList data;
+        ArrayList data;  // Used for accumulating data for the .sdata Section.
+        PEResourceDirectory unmanagedResourceRoot;
         BinaryWriter reloc = new BinaryWriter(new MemoryStream());
         uint dateStamp = 0, codeStart = 0;
         uint numSections = 2; // always have .text  and .reloc sections
@@ -88,7 +89,6 @@ namespace QUT.PERWAPI
                 if (!verInfo.fromExisting) verInfo.characteristics = FileImage.exeCharacteristics;
             }
             text = new Section(FileImage.textName, 0x60000020);     // IMAGE_SCN_CNT  CODE, EXECUTE, READ
-            //			rsrc = new Section(rsrcName,0x40000040);     // IMAGE_SCN_CNT  INITIALIZED_DATA, READ
             metaData = md;
             metaData.InitMetaDataOut(this);
 
@@ -425,7 +425,11 @@ namespace QUT.PERWAPI
 
         private void WriteRsrcSection()
         {
-            Console.WriteLine("Trying to write rsrc section !!!");
+            //Console.WriteLine("Trying to write rsrc section !!!");
+            long pos = BaseStream.Position;
+            this.unmanagedResourceRoot.Write(this, rsrc.RVA());
+            pos = BaseStream.Position - pos;
+            WriteZeros(NumToAlign((uint)pos, verInfo.fileAlign));
         }
 
         private void WriteRelocSection()
@@ -449,8 +453,13 @@ namespace QUT.PERWAPI
                 data = new ArrayList();
             }
             data.Add(cVal);
-            //cVal.DataOffset = sdata.Tide();
-            //sdata.IncTide(cVal.GetSize());
+        }
+
+        internal void AddUnmanagedResourceDirectory(PEResourceDirectory directory) {
+          if (rsrc == null)
+            rsrc = new Section(FileImage.rsrcName, 0x40000040);
+          rsrc.IncTide(directory.Size());
+          unmanagedResourceRoot = directory;
         }
 
         internal void WriteZeros(uint numZeros)
@@ -504,10 +513,17 @@ namespace QUT.PERWAPI
             Write(FileImage.HeapCommitSize);
             Write(FileImage.LoaderFlags);
             Write(FileImage.NumDataDirectories);  // Data Directories
-            WriteZeros(8);                  // Export Table
+            WriteZeros(8);                        // Export Table
             Write(importTableOffset + text.RVA());
             Write(totalImportTableSize);
-            WriteZeros(24);            // Resource, Exception and Certificate Tables
+
+            if (rsrc != null) {
+              Write(rsrc.RVA());
+              Write(rsrc.Tide()); // Tide() is loadedSize, Size() is sizeOnDisk.
+            }
+            else
+              WriteZeros(8);
+            WriteZeros(16);            // Exception and Certificate Tables
             Write(relocRVA);
             Write(relocTide);
             Write(debugRVA);

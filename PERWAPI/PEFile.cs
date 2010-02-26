@@ -38,7 +38,10 @@ namespace QUT.PERWAPI
         private Assembly thisAssembly;
         PEWriter output;
         MetaDataOut metaData;
-        System.IO.FileStream unmanagedResources;
+
+        System.IO.FileStream unmanagedResources;   // Unmanaged resources read from a file.
+
+        internal PEResourceDirectory unmanagedResourceRoot; // Unmanaged resources added programmatically.
         internal MetaDataTables metaDataTables;
         internal PEFileVersionInfo versionInfo;
 
@@ -252,14 +255,14 @@ namespace QUT.PERWAPI
         }
 
         /// <summary>
-        /// Add a manifest resource to this PEFile 
+        /// Add an unmanaged resource to this PEFile 
         /// </summary>
-        public void AddUnmanagedResources(string resFilename)
+        public void AddUnmanagedResourceFile(string resFilename)
         {
             if (!System.IO.File.Exists(resFilename))
                 throw (new FileNotFoundException("Unmanaged Resource File Not Found", resFilename));
-            unmanagedResources = System.IO.File.OpenRead(resFilename);
-            throw new NotYetImplementedException("Unmanaged Resources are not yet implemented");
+            // unmanagedResources = System.IO.File.OpenRead(resFilename);
+            throw new NotYetImplementedException("Unmanaged Resources from input files are not yet implemented");
         }
 
         /// <summary>
@@ -374,7 +377,6 @@ namespace QUT.PERWAPI
         /// <param name="debug">include debug information</param>
         public void WritePEFile(bool writePDB)
         {
-
             if (outStream == null)
             {
                 if (outputDir != null)
@@ -395,6 +397,12 @@ namespace QUT.PERWAPI
             }
 
             BuildMetaData();
+
+            // If the application is roundtripping an input PE-file with
+            // unmanaged resources, then this.unmanagedResourceRoot != null.
+            if (this.unmanagedResourceRoot != null)
+              output.AddUnmanagedResourceDirectory(this.unmanagedResourceRoot);
+
             output.MakeFile(versionInfo);
         }
 
