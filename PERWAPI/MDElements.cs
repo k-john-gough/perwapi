@@ -68,6 +68,7 @@ namespace QUT.PERWAPI
         /// </summary>
         protected ArrayList customAttributes;
         protected bool done = false;
+        
         protected bool sortTable = false;
         internal bool unresolved = false;
 

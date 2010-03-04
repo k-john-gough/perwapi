@@ -41,8 +41,6 @@ namespace QUT.PERWAPI
         private static readonly uint VisibilityMask = 0x07;
         private static readonly uint LayoutMask = 0x18;
         private static readonly uint StringFormatMask = 0x030000;
-        //private static readonly uint fieldListIx = 0, methListIx = 1, eventListIx = 2, propListIx = 3; 
-        //private static readonly uint	numListIx = 4;
 
         protected PEFile scope;
         uint flags;
@@ -56,9 +54,6 @@ namespace QUT.PERWAPI
         ArrayList properties = new ArrayList();
         ArrayList interfaces = new ArrayList();
         ArrayList methodImpls = new ArrayList();
-        //uint[] interfaceIndexes;
-        //private string[] eventNames, propertyNames, nestedNames;
-        //internal string[][] names = new string[numListIx][];
 
         /*-------------------- Constructors ---------------------------------*/
 
@@ -978,7 +973,17 @@ namespace QUT.PERWAPI
           }
 
           //uint startT = md.TableIndex(MDTable.TypeDef);
+          //uint startM = md.TableIndex(MDTable.Method);
+
           md.AddToTable(MDTable.TypeDef, this);
+          methodIx = md.TableIndex(MDTable.Method);
+          fieldIx = md.TableIndex(MDTable.Field);
+
+          //Console.WriteLine("Building tables for " + this.TypeName());
+          //Console.WriteLine("tIx {0}, methods {1} - {2}",
+          //  Hex.Short((short)startT),
+          //  Hex.Short((short)startM),
+          //  Hex.Short((short)md.TableIndex(MDTable.Method)));
 
           for (int i = 0; i < genericParams.Count; i++) {
             ((GenericParam)genericParams[i]).BuildMDTables(md);
@@ -993,22 +998,12 @@ namespace QUT.PERWAPI
 
           if (layout != null) layout.BuildMDTables(md);
 
-          //uint startM = md.TableIndex(MDTable.Method);
-
           // Console.WriteLine("adding methods " + methods.Count);
-          methodIx = md.TableIndex(MDTable.Method);
           for (int i = 0; i < methods.Count; i++) {
             ((MethodDef)methods[i]).BuildMDTables(md);
           }
 
-          //Console.WriteLine("Building tables for " + this.TypeName());
-          //Console.WriteLine("tIx {0}, methods {1} - {2}",
-          //  Hex.Short((short)startT),
-          //  Hex.Short((short)startM),
-          //  Hex.Short((short)md.TableIndex(MDTable.Method)));
-
           // Console.WriteLine("adding fields");
-          fieldIx = md.TableIndex(MDTable.Field);
           for (int i = 0; i < fields.Count; i++) {
             ((FieldDef)fields[i]).BuildMDTables(md);
           }

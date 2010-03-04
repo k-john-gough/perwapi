@@ -364,6 +364,7 @@ namespace QUT.PERWAPI
         private void BuildMetaData()
         {
             BuildMDTables(metaData);
+            metaData.BuildCode();
             if (thisAssembly != null)
             {
                 thisAssembly.BuildMDTables(metaData);

@@ -50,6 +50,16 @@ namespace QUT.PERWAPI
         {
         }
 
+      // Out of line generation of metadata for MethodDef code.
+      // This avoids the ordering errors for method and param indices
+      // when the code of a method refers to methods/fields of classes
+      // that have not been entered in the table.
+      // (kjg March 2010)
+        internal void BuildCode() {
+          foreach (object method in tables[(int)MDTable.Method])
+            (method as MethodDef).TraverseCode(this);
+        }
+
         Hashtable debugsigs = new Hashtable();
 
         /// <summary>
@@ -190,8 +200,8 @@ namespace QUT.PERWAPI
         }
 
         internal void AddToTable(MDTable tableIx, MetaDataElement elem) {
-          // updates Row field of the element
           // Console.WriteLine("Adding element to table " + (uint)tableIx);
+
           ArrayList table = GetTable(tableIx);
           if (table.Contains(elem)) {
             Console.Out.WriteLine("ERROR - element already in table " + tableIx);

@@ -1649,7 +1649,7 @@ namespace QUT.PERWAPI
                     if ((flags & CILInstructions.EHTable) == 0)
                         throw new Exception("Section not an Exception Handler Table");
                     int sectLen = ReadByte() + (ReadByte() << 8) + (ReadByte() << 16);
-                    int numClauses = sectLen - 4;
+                    int numClauses = sectLen; // -4;
                     if (fatSect)
                         numClauses /= 24;
                     else
