@@ -1033,6 +1033,7 @@ namespace QUT.PERWAPI
         {
             md.AddToTable(MDTable.Method, this);
             nameIx = md.AddToStringsHeap(name);
+
             if (genericParams != null)
             {
                 for (int i = 0; i < genericParams.Count; i++)
@@ -1054,24 +1055,26 @@ namespace QUT.PERWAPI
                 localSig = new LocalSig(locals);
                 localSig.BuildMDTables(md);
             }
-            try
-            {
-                if (code != null)
-                {
-                    if (code.IsEmpty())
-                    {
-                        code = null;
-                    }
-                    else
-                    {
-                        code.BuildTables(md);
-                    }
-                }
-            }
-            catch (InstructionException ex)
-            {
-                throw new Exception(ex.AddMethodName(name));
-            }
+
+          // The following code is done out of line in method
+          // TraverseCode *after* all the method indices have
+          // been allocated in the metadata.
+          // (kjg, March 2010)
+            //try {
+            //  if (code != null) {
+            //    if (code.IsEmpty()) {
+            //      code = null;
+            //    }
+            //    else {
+            //      code.BuildTables(md);
+            //    }
+            //  }
+            //}
+            //catch (InstructionException ex) {
+            //  throw new Exception(ex.AddMethodName(name));
+            //}
+
+
             parIx = md.TableIndex(MDTable.Param);
             for (int i = 0; i < sig.numPars; i++)
             {
@@ -1079,6 +1082,22 @@ namespace QUT.PERWAPI
                 parList[i].BuildMDTables(md);
             }
             sig.BuildTables(md);
+        }
+
+        internal void TraverseCode(MetaDataOut md) {
+          try {
+            if (code != null) {
+              if (code.IsEmpty()) {
+                code = null;
+              }
+              else {
+                code.BuildTables(md);
+              }
+            }
+          }
+          catch (InstructionException ex) {
+            throw new Exception(ex.AddMethodName(name));
+          }
         }
 
         internal sealed override void BuildCILInfo(CILWriter output)
