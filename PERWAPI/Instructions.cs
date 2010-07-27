@@ -2647,7 +2647,7 @@ namespace QUT.PERWAPI {
     /// <returns>An integer value representing the delta distance.</returns>
     internal override int GetDeltaDistance() {
       MethSig mSig = null;
-      switch ((MethodOp)instr) {
+      switch ((MethodOp)(this.twoByteInstr ? instr + 0xFE00 : instr)) {
         case MethodOp.callvirt:
         case MethodOp.call: {
             mSig = meth.GetSig();
