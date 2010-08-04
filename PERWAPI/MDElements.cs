@@ -241,11 +241,13 @@ namespace QUT.PERWAPI
     {
         uint parentIx, constraintIx;
         GenericParam parent;
-        Class constraint;
+        Type constraint;
+        // Class constraint;
 
         /*-------------------- Constructors ---------------------------------*/
-
-        public GenericParamConstraint(GenericParam parent, Class constraint)
+       
+        public GenericParamConstraint(GenericParam parent, Type constraint)
+        //public GenericParamConstraint(GenericParam parent, Class constraint)
         {
             this.parent = parent;
             this.constraint = constraint;
@@ -268,7 +270,7 @@ namespace QUT.PERWAPI
         internal override void Resolve(PEReader buff)
         {
             parent = (GenericParam)buff.GetElement(MDTable.GenericParam, parentIx);
-            parent.AddConstraint((Class)buff.GetCodedElement(CIx.TypeDefOrRef, constraintIx));
+            parent.AddConstraint((Type)buff.GetCodedElement(CIx.TypeDefOrRef, constraintIx));
         }
 
         internal static uint Size(MetaData md)

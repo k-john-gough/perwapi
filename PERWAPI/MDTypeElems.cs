@@ -18,6 +18,7 @@
 using System;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 
 
@@ -327,7 +328,13 @@ namespace QUT.PERWAPI
         uint parentIx, nameIx;
         string name;
         MetaDataElement parent;
-        private ArrayList constraints = new ArrayList();
+
+      // Users add and remove constraintTypes to this list.
+      // The constraints list is used during metadata output
+      // and contains objects of GenericParamConstraint type.
+        private List<Type> constraintTypes = new List<Type>();
+        private List<GenericParamConstraint> constraints = new List<GenericParamConstraint>();
+
         internal static bool extraField = true;
 
         // There should only be one GenericParTypeSpec entry 
@@ -426,23 +433,23 @@ namespace QUT.PERWAPI
         /// <summary>
         /// Add a type constraint to this generic parameter
         /// </summary>
-        /// <param name="cType">class constraining the parameter type</param>
-        public void AddConstraint(Class cType)
+        /// <param name="cType">type constraining the parameter type</param>
+        public void AddConstraint(Type cType)
         {
-            constraints.Add(cType);
+            constraintTypes.Add(cType);
         }
 
         /// <summary>
         /// Remove a constraint from this generic parameter
         /// </summary>
         /// <param name="cType">class type of constraint</param>
-        public void RemoveConstraint(Class cType)
+        public void RemoveConstraint(Type cType)
         {
-            for (int i = 0; i < constraints.Count; i++)
+            for (int i = 0; i < constraintTypes.Count; i++)
             {
-                if (constraints[i] == cType)
+                if (constraintTypes[i] == cType)
                 {
-                    constraints.RemoveAt(i);
+                    constraintTypes.RemoveAt(i);
                     return;
                 }
             }
@@ -453,9 +460,9 @@ namespace QUT.PERWAPI
         /// </summary>
         /// <param name="i">constraint index</param>
         /// <returns></returns>
-        public Class GetConstraint(int i)
+        public Type GetConstraint(int i)
         {
-            return (Class)constraints[i];
+            return (Class)constraintTypes[i];
         }
 
         /// <summary>
@@ -464,7 +471,7 @@ namespace QUT.PERWAPI
         /// <returns></returns>
         public int GetConstraintCount()
         {
-            return constraints.Count;
+            return constraintTypes.Count;
         }
 
         /// <summary>
@@ -475,9 +482,9 @@ namespace QUT.PERWAPI
 
         public MetaDataElement GetParent() { return parent; }
 
-        public Class[] GetClassConstraints()
+        public Type[] GetClassConstraints()
         {
-            return (Class[])constraints.ToArray(typeof(Class)); // KJG 20-May-2005
+          return constraintTypes.ToArray();
         }
 
         /*----------------------------- internal functions ------------------------------*/
@@ -533,7 +540,6 @@ namespace QUT.PERWAPI
           }
           return this.myTypeSpec;
         }
-
         
 
         internal override uint SortKey()
@@ -542,26 +548,49 @@ namespace QUT.PERWAPI
                 | parent.GetCodedIx(CIx.TypeOrMethodDef);
         }
 
-        internal override void BuildTables(MetaDataOut md)
-        {
-            if (parent is MethodRef || parent is ClassRef) return; // don't add it - fix by CK
-            md.AddToTable(MDTable.GenericParam, this);
-            nameIx = md.AddToStringsHeap(name);
-            for (int i = 0; i < constraints.Count; i++)
-            {
-                Class cClass = (Class)constraints[i];
-                constraints[i] = new GenericParamConstraint(this, cClass);
-                if (cClass is ClassRef) cClass.BuildMDTables(md);
-                // Fix by CK - should be BuildTables too??
-                if (cClass is ClassSpec) md.ConditionalAddTypeSpec(cClass);
+        internal override void BuildTables(MetaDataOut md) {
+          if (parent is MethodRef || parent is ClassRef) return; // don't add it - fix by CK
+          md.AddToTable(MDTable.GenericParam, this);
+          nameIx = md.AddToStringsHeap(name);
+          // KJG note, Aug 2010.
+          // The constraint metadata table (0x2c) holds four kinds of thing:
+          // (1) TypeDef objects -- always already in table 0x2
+          // (2) TypeRef objects -- must be entered in table 0x1
+          // (3) ClassSpec objects -- entered in typespec table 0x1b
+          // (4) GenericParamTypeSpec objects -- also in table 0x1b.
+          //     These are generated on demand, for those GenericParam 
+          //     objects which do not have a TypeSpec already.
+          // In the last three cases, 2 - 4, the objects should also 
+          // be offered up to the relevant metadata table.
+          for (int i = 0; i < constraintTypes.Count; i++) {
+            ClassSpec constraintSpec;
+            GenericParam constraintParam;
+            Type cType = constraintTypes[i];
+
+            if (cType is ClassRef)
+              cType.BuildMDTables(md);
+            else if ((constraintSpec = cType as ClassSpec) != null) {
+              // Fix by CK - should be BuildTables too?? 
+              // Yes it should (kjg) Aug 2010
+              md.ConditionalAddTypeSpec(cType);
+              cType.BuildMDTables(md); // Just in case genClass is a TypeRef  
             }
+            else if ((constraintParam = cType as GenericParam) != null)
+              // AddTypeSpec creates GenericParamTypeSpec object and 
+              // adds it to table 0x1b, if not already allocated.
+              // Replace GenericParam constraint on list by 
+              // the GenericParamTypeSpec
+              cType = constraintParam.AddTypeSpec(md);
+
+            constraints.Add(new GenericParamConstraint(this, cType));
+          }
         }
 
         internal override void BuildCILInfo(CILWriter output)
         {
-            for (int i = 0; i < constraints.Count; i++)
+            for (int i = 0; i < constraintTypes.Count; i++)
             {
-                Class cClass = (Class)constraints[i];
+                Class cClass = (Class)constraintTypes[i];
                 if (!cClass.isDef())
                 {
                     cClass.BuildCILInfo(output);
@@ -573,7 +602,7 @@ namespace QUT.PERWAPI
         {
             for (int i = 0; i < constraints.Count; i++)
             {
-                md.AddToTable(MDTable.GenericParamConstraint, (GenericParamConstraint)constraints[i]);
+                md.AddToTable(MDTable.GenericParamConstraint, constraints[i]);
             }
         }
 
