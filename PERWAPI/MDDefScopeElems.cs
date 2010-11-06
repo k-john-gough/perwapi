@@ -193,6 +193,7 @@ namespace QUT.PERWAPI
         public byte[] KeyTokenBytes()
         {
             if (this.publicKey != null &&
+                this.publicKey.Length != 0 &&
                 this.hashAlgId == HashAlgorithmType.SHA1)
             {
                 int ix, ofst;
