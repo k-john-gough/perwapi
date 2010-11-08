@@ -112,7 +112,7 @@ namespace QUT.PERWAPI
             resElement = new PEResourceDirectory();
           else
             resElement = new PEResourceData();
-          resElement.Name = ReadName(reader, baseOffset + nameOrId & 0x7fffffff);
+          resElement.Name = this.ReadName(reader, baseOffset + nameOrId & 0x7fffffff);
           resElement.offset = baseOffset + (long)(elemOfst & 0x7fffffff);
           this.AddElement(resElement);
         }
@@ -148,6 +148,7 @@ namespace QUT.PERWAPI
         char[] name = new char[nLength];
         for (int i = 0; i < nLength; i++)
           name[i] = (char)rdr.ReadUInt16();
+        rdr.BaseStream.Seek(savedPos, SeekOrigin.Begin);
         return new string(name);
       }
 
