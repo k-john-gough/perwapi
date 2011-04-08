@@ -18,6 +18,7 @@
 using System;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace QUT.PERWAPI
 {
@@ -44,6 +45,8 @@ namespace QUT.PERWAPI
         internal PEResourceDirectory unmanagedResourceRoot; // Unmanaged resources added programmatically.
         internal MetaDataTables metaDataTables;
         internal PEFileVersionInfo versionInfo;
+
+        private Dictionary<string, AssemblyRef> asmRefDict = new Dictionary<string, AssemblyRef>();
 
         /*-------------------- Constructors ---------------------------------*/
 
@@ -164,10 +167,14 @@ namespace QUT.PERWAPI
         /// </summary>
         /// <param name="assemName">the external assembly name</param>
         /// <returns>a descriptor for this external assembly</returns>
-        public AssemblyRef MakeExternAssembly(string assemName)
-        {
-            if (assemName.CompareTo(MSCorLib.mscorlib.Name()) == 0) return MSCorLib.mscorlib;
-            return new AssemblyRef(assemName);
+        public AssemblyRef MakeExternAssembly(string assemName) {
+          AssemblyRef result = null;
+          if (assemName.CompareTo(MSCorLib.mscorlib.Name()) == 0) return MSCorLib.mscorlib;
+          else if (!asmRefDict.TryGetValue(assemName, out result)) {
+            result = new AssemblyRef(assemName);
+            asmRefDict[assemName] = result;
+          }
+          return result;
         }
 
         /// <summary>
